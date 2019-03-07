@@ -3,3 +3,14 @@ language: go
 go:
 - 1.x
 
+jobs:
+  include:
+    - stage: GitHub Release
+      script: echo "Deploying to GitHub releases ..."
+      deploy:
+        provider: releases
+        api_key: $GITHUB_OAUTH_TOKEN
+        skip_cleanup: true
+        on:
+          tags: true
+
