@@ -11,6 +11,8 @@ jobs:
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
         skip_cleanup: true
+        file:
+          - "lkv373"
         on:
           tags: true
 
