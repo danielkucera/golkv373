@@ -7,7 +7,11 @@ jobs:
   include:
     - script: find .
     - stage: GitHub Release
-      script: echo "Deploying to GitHub releases ..."
+      script: 
+        - echo "Building and Deploying to GitHub releases ..."
+        - go build
+        - GOOS=windows GOARCH=386 go build
+        - find .
       deploy:
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
