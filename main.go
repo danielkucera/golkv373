@@ -51,6 +51,18 @@ func main() {
 		}
 	})
 
+	router.GET("/frame.jpeg", func(c *gin.Context) {
+
+		frame := curFrame
+
+		for !frame.Complete {
+			time.Sleep(10 * time.Millisecond)
+		}
+
+		c.Data(200, "image/jpeg", frame.Data)
+	})
+
+
 	router.GET("/", func(c *gin.Context) {
 		c.Data(200, "text/html", []byte("<img src='frame.mjpg'>"))
 	})
