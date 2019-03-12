@@ -10,7 +10,7 @@ import (
 const (
 	srvAddr         = "226.2.2.2:2068"
 	txAddr          = "192.168.168.55:48689"
-	maxDatagramSize = 8192
+	maxDatagramSize = 1600
 )
 
 var curFrame *Frame
