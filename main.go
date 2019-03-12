@@ -90,28 +90,30 @@ func activateStream(a string) {
 func msgHandler(src *net.UDPAddr, n int, b []byte) {
 	chunk_n := int(b[2])*256&0xef + int(b[3])
 	frame_n := int(b[0])*256 + int(b[1])
-	data := b[4:]
+	data := b[4:n]
 	endframe := (b[2] & 0x80) > 0
 
-	if frame_n != curFrame.Number {
+	if chunk_n != curFrame.LastChunk + 1 {
+		log.Println(frame_n, "was expecting chunk", curFrame.LastChunk + 1, " got", chunk_n)
 	}
 
 	if endframe {
 		log.Println(n, "end of frame", frame_n)
 		curFrame.Next = &Frame{
 			Number: frame_n,
+			LastChunk: -1,
 			Data:   make([]byte, 2*1024*1024),
 		}
 		curFrame.Data = append(curFrame.Data[:1024*curFrame.LastChunk], data...)
 		curFrame.Complete = true
 		curFrame = curFrame.Next
 	} else {
-		copy(curFrame.Data[1024*chunk_n:], data)
+		copy(curFrame.Data[1020*chunk_n:], data)
 		curFrame.LastChunk = chunk_n
 	}
 
 	//	log.Println(n, "bytes read from", src, curFrame.Number, chunk_n, endframe)
-	//log.Println(hex.Dump(b[:n]))
+	//log.Println(hex.Dump(data))
 }
 
 func serveMulticastUDP(a string, h func(*net.UDPAddr, int, []byte)) {
