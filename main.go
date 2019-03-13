@@ -36,19 +36,28 @@ func main() {
 
 		frame := curFrame
 
-		for true {
+		c.Stream(func(w io.Writer) bool {
+			defer func() {
+				stopStream = false
+			}()
 
-			for !frame.Complete {
-				time.Sleep(10 * time.Millisecond)
+			for true {
+
+				for !frame.Complete {
+					time.Sleep(10 * time.Millisecond)
+				}
+
+				content := append(frame.Data, []byte("\n")...)
+
+				_, err := w.Write(append([]byte("--myboundary\nContent-Type: image/jpeg\n"), content...))
+
+				frame = frame.Next
+
 			}
 
-			content := append(frame.Data, []byte("\n")...)
+			return stopStream
+		})
 
-			c.Data(200, "video/x-motion-jpeg", append([]byte("--myboundary\nContent-Type: image/jpeg\n"), content...))
-
-			frame = frame.Next
-
-		}
 	})
 
 	router.GET("/frame.jpeg", func(c *gin.Context) {
