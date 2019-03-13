@@ -196,9 +196,9 @@ func serveMulticastUDP(a string, h func(*net.UDPAddr, int, []byte)) {
 		log.Fatal(err)
 	}
 	l, err := net.ListenMulticastUDP("udp", nil, addr)
-	l.SetReadBuffer(50 * maxDatagramSize)
+	l.SetReadBuffer(2*1024*1024)
+	b := make([]byte, maxDatagramSize)
 	for {
-		b := make([]byte, maxDatagramSize)
 		n, src, err := l.ReadFromUDP(b)
 		if err != nil {
 			log.Fatal("ReadFromUDP failed:", err)
