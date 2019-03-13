@@ -177,7 +177,8 @@ func msgHandler(src *net.UDPAddr, n int, b []byte) {
 			LastChunk: -1,
 			Data:      make([]byte, 2*1024*1024),
 		}
-		curFrame.Data = append(curFrame.Data[:1024*curFrame.LastChunk], data...)
+		curLen := 1020*(curFrame.LastChunk+1)
+		curFrame.Data = append(curFrame.Data[:curLen], data...)
 		curFrame.Complete = true
 		recvMap[IP] = curFrame.Next
 	} else {
