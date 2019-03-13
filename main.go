@@ -11,6 +11,9 @@ const (
 	srvAddr         = "226.2.2.2:2068"
 	txAddr          = "192.168.168.55:48689"
 	maxDatagramSize = 1600
+	ctrlv1		= "\x54\x46\x36\x7a\x60\x02\x00\x00\x00\x00\x00\x03\x03\x01\x00\x26\x00\x00\x00\x00\x02\x34\xc2"
+	ctrlv2		= "\x54\x46\x36\x7a\x60\x02\x00\x00\x00\x00\x00\x03\x03\x01\x00\x26\x00\x00\x00\x00\x0d\x2f\xd8"
+
 )
 
 var curFrame *Frame
@@ -89,8 +92,7 @@ func activateStream(a string) {
 	}
 	c, err := net.DialUDP("udp", laddr, addr)
 	for {
-		c.Write([]byte{0x54, 0x46, 0x36, 0x7a, 0x60, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x03, 0x01, 0x00, 0x26,
-		0x00, 0x00, 0x00, 0x00, 0x0d, 0x2f, 0xd8})
+		c.Write([]byte(ctrlv2))
 		time.Sleep(1 * time.Second)
 		log.Printf("keepalive sent")
 	}
