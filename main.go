@@ -10,7 +10,6 @@ import (
 
 const (
 	srvAddr         = "226.2.2.2:2068"
-	txAddr          = "192.168.168.55:48689"
 	maxDatagramSize = 1600
 	ctrlv1		= "\x54\x46\x36\x7a\x60\x02\x00\x00\x00\x00\x00\x03\x03\x01\x00\x26\x00\x00\x00\x00\x02\x34\xc2"
 	ctrlv2		= "\x54\x46\x36\x7a\x60\x02\x00\x00\x00\x00\x00\x03\x03\x01\x00\x26\x00\x00\x00\x00\x0d\x2f\xd8"
@@ -31,7 +30,7 @@ func main() {
 	curFrame = &Frame{
 		Data: make([]byte, 2*1024*1024),
 	}
-	go activateStream(txAddr)
+	go activateStream()
 	go serveMulticastUDP(srvAddr, msgHandler)
 
 	router := gin.Default()
@@ -87,21 +86,27 @@ func main() {
 	router.Run(":8080")
 }
 
-func activateStream(a string) {
-	addr, err := net.ResolveUDPAddr("udp", a)
-	if err != nil {
-		log.Fatal(err)
+func activateStream() {
+	addr := net.UDPAddr{
+	    Port: 48689,
+	    IP:   net.ParseIP("0.0.0.0"),
 	}
-	laddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:48689")
+	conn, err := net.ListenUDP("udp", &addr)
 	if err != nil {
-		log.Fatal(err)
+	    panic(err)
 	}
-	c, err := net.DialUDP("udp", laddr, addr)
+	defer conn.Close()
+
+	var buf [1024]byte
 	for {
-		c.Write([]byte(ctrlv2))
-		time.Sleep(1 * time.Second)
-		log.Printf("keepalive sent")
+	    _, remote, err := conn.ReadFromUDP(buf[:])
+	    if err != nil {
+		log.Printf(err.Error())
+	    }
+	    conn.WriteToUDP([]byte(ctrlv2), remote)
+	    log.Printf("keepalive sent to %s", remote)
 	}
+
 }
 
 func msgHandler(src *net.UDPAddr, n int, b []byte) {
