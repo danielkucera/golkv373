@@ -3,21 +3,25 @@ language: go
 go:
 - 1.x
 
+env:
+  - LIN64BIN=golkv373-$TRAVIS_TAG-linux64
+  - WIN32BIN=golkv373-$TRAVIS_TAG-win32.exe
+
 jobs:
   include:
     - stage: GitHub Release
       script: 
         - echo "Building and Deploying to GitHub releases ..."
-        - go build
-        - GOOS=windows GOARCH=386 go build
+        - go build -o $LIN64BIN
+        - GOOS=windows GOARCH=386 go build -o $WIN32BIN
         - find .
       deploy:
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
         skip_cleanup: true
         file:
-          - "golkv373"
-          - "golkv373.exe"
+          - $LIN64BIN
+          - $WIN32BIN
         on:
           tags: true
 
