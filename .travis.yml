@@ -4,8 +4,9 @@ go:
 - 1.x
 
 env:
-  - LIN64BIN=golkv373-$TRAVIS_TAG-linux64
-  - WIN32BIN=golkv373-$TRAVIS_TAG-win32.exe
+  global:
+    - LIN64BIN=golkv373-$TRAVIS_TAG-linux64
+    - WIN32BIN=golkv373-$TRAVIS_TAG-win32.exe
 
 jobs:
   include:
