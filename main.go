@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -39,6 +40,9 @@ func main() {
 
 		frame := curFrame
 
+		c.Header("Content-Type", "multipart/x-mixed-replace; boundary=--myboundary")
+
+		stopStream := true
 		c.Stream(func(w io.Writer) bool {
 			defer func() {
 				stopStream = false
@@ -50,9 +54,11 @@ func main() {
 					time.Sleep(10 * time.Millisecond)
 				}
 
-				content := append(frame.Data, []byte("\n")...)
+				content := append(frame.Data, []byte("\r\n")...)
 
-				_, err := w.Write(append([]byte("--myboundary\nContent-Type: image/jpeg\n"), content...))
+				_, err := w.Write(append([]byte("--myboundary\r\nContent-Type: image/jpeg\r\n\r\n"), content...))
+				if err != nil {
+				}
 
 				frame = frame.Next
 
