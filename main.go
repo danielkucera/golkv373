@@ -19,12 +19,15 @@ const (
 var devices map[string]*Device
 
 type Device struct {
-	Frame      *Frame
-	FramesLost int
-	RxBytes    int
-	RxFrames   int
-	FPS        float32
-	BPS        float32
+	Frame         *Frame
+	LastFrameTime time.Time
+	RxBytes       int
+	RxBytesLast   int
+	RxFrames      int
+	RxFramesLast  int
+	ChunksLost    int
+	FPS           float32
+	BPS           float32
 }
 
 type Frame struct {
@@ -39,6 +42,7 @@ func main() {
 	devices = make(map[string]*Device)
 	go activateStream()
 	go serveMulticastUDP(srvAddr, msgHandler)
+	go statistics()
 
 	router := gin.Default()
 
@@ -145,6 +149,19 @@ func main() {
 	router.Run(":8080")
 }
 
+func statistics() {
+	for true {
+		for IP := range devices {
+			device := devices[IP]
+			device.BPS = float32(device.RxBytes - device.RxBytesLast)
+			device.FPS = float32(device.RxFrames - device.RxFramesLast)
+			device.RxBytesLast = device.RxBytes
+			device.RxFramesLast = device.RxFrames
+		}
+		time.Sleep(time.Second)
+	}
+}
+
 func activateStream() {
 	addr := net.UDPAddr{
 		Port: 48689,
@@ -194,7 +211,10 @@ func msgHandler(src *net.UDPAddr, n int, b []byte) {
 
 	if chunk_n != curFrame.LastChunk+1 {
 		log.Println(frame_n, "was expecting chunk", curFrame.LastChunk+1, " got", chunk_n)
+		device.ChunksLost += chunk_n - curFrame.LastChunk + 1
 	}
+
+	device.RxBytes += len(data)
 
 	if endframe {
 		//log.Println(n, "end of frame", frame_n)
@@ -206,6 +226,8 @@ func msgHandler(src *net.UDPAddr, n int, b []byte) {
 		curLen := 1020 * (curFrame.LastChunk + 1)
 		curFrame.Data = append(curFrame.Data[:curLen], data...)
 		curFrame.Complete = true
+		device.RxFrames++
+		device.LastFrameTime = time.Now()
 		device.Frame = curFrame.Next
 	} else {
 		copy(curFrame.Data[1020*chunk_n:], data)
