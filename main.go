@@ -185,14 +185,19 @@ func main() {
 
 func statistics() {
 	for true {
+		active := ""
 		for IP := range devices {
 			device := devices[IP]
 			device.BPS = float32(device.RxBytes - device.RxBytesLast)
 			device.FPS = float32(device.RxFrames - device.RxFramesLast)
 			device.RxBytesLast = device.RxBytes
 			device.RxFramesLast = device.RxFrames
+			if device.BPS > 0 {
+				active += IP + " "
+			}
 		}
 		time.Sleep(time.Second)
+		log.Printf("Active transmitters: %s", active)
 	}
 }
 
