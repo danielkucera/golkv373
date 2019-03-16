@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"image"
+	"image/jpeg"
 	"io"
 	"log"
 	"net"
@@ -23,6 +26,7 @@ var devices map[string]*Device
 
 type Device struct {
 	Frame         *Frame
+	FrameConfig   image.Config
 	LastFrameTime time.Time
 	RxBytes       int
 	RxBytesLast   int
@@ -40,6 +44,12 @@ type Frame struct {
 	Data      []byte `json:"-"`
 	LastChunk int
 	Next      *Frame
+}
+
+func (f *Frame) waitComplete() {
+	for !f.Complete {
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func main() {
@@ -113,9 +123,7 @@ func main() {
 
 				for true {
 
-					for !frame.Complete {
-						time.Sleep(10 * time.Millisecond)
-					}
+					frame.waitComplete()
 
 					if !frame.Damaged {
 						content := append(frame.Data, []byte("\r\n")...)
@@ -148,9 +156,7 @@ func main() {
 				return
 			}
 
-			for !frame.Complete {
-				time.Sleep(10 * time.Millisecond)
-			}
+			frame.waitComplete()
 
 			c.Data(200, "image/jpeg", frame.Data)
 		})
@@ -195,6 +201,10 @@ func statistics() {
 			if device.BPS > 0 {
 				active += IP + " "
 			}
+			go func(frame *Frame) {
+				frame.waitComplete()
+				device.FrameConfig, _ = jpeg.DecodeConfig(bytes.NewReader(frame.Data))
+			}(device.Frame)
 		}
 		time.Sleep(time.Second)
 		log.Printf("Active transmitters: %s", active)
