@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"image"
@@ -46,10 +47,14 @@ type Frame struct {
 	Next      *Frame
 }
 
-func (f *Frame) waitComplete() {
-	for !f.Complete {
-		time.Sleep(10 * time.Millisecond)
+func (f *Frame) waitComplete(ms int) error {
+	for i := 0; i < ms || ms == 0; i++ {
+		if f.Complete {
+			return nil
+		}
+		time.Sleep(time.Millisecond)
 	}
+	return errors.New("Waiting for frame timed out")
 }
 
 func main() {
@@ -123,7 +128,7 @@ func main() {
 
 				for true {
 
-					frame.waitComplete()
+					frame.waitComplete(0)
 
 					if !frame.Damaged {
 						content := append(frame.Data, []byte("\r\n")...)
@@ -156,7 +161,7 @@ func main() {
 				return
 			}
 
-			frame.waitComplete()
+			frame.waitComplete(1000)
 
 			c.Data(200, "image/jpeg", frame.Data)
 		})
@@ -202,7 +207,7 @@ func statistics() {
 				active += IP + " "
 			}
 			go func(frame *Frame) {
-				frame.waitComplete()
+				frame.waitComplete(1000)
 				device.FrameConfig, _ = jpeg.DecodeConfig(bytes.NewReader(frame.Data))
 			}(device.Frame)
 		}
@@ -253,10 +258,20 @@ func msgHandler(src *net.UDPAddr, n int, b []byte) {
 			Number:    frame_n,
 			LastChunk: -1,
 			Data:      make([]byte, 2*1024*1024),
+			Complete:  true,
 		}
 	}
 
-	curFrame := device.Frame
+	if device.Frame.Next == nil {
+
+		device.Frame.Next = &Frame{
+			Number:    frame_n,
+			LastChunk: -1,
+			Data:      make([]byte, 2*1024*1024),
+		}
+	}
+
+	curFrame := device.Frame.Next
 
 	if chunk_n != curFrame.LastChunk+1 {
 		log.Println(frame_n, "was expecting chunk", curFrame.LastChunk+1, " got", chunk_n)
@@ -278,7 +293,7 @@ func msgHandler(src *net.UDPAddr, n int, b []byte) {
 		curFrame.Complete = true
 		device.RxFrames++
 		device.LastFrameTime = time.Now()
-		device.Frame = curFrame.Next
+		device.Frame = curFrame
 	} else {
 		copy(curFrame.Data[1020*chunk_n:], data)
 		curFrame.LastChunk = chunk_n
