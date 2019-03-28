@@ -189,7 +189,7 @@ func activateStream() {
 }
 
 func msgHandler(src *net.UDPAddr, n int, b []byte) {
-	chunk_n := int(b[2])*256&0xef + int(b[3])
+	chunk_n := (int(b[2])&0x7f)*256 + int(b[3])
 	frame_n := int(b[0])*256 + int(b[1])
 	data := b[4:n]
 	endframe := (b[2] & 0x80) > 0
