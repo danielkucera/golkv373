@@ -33,6 +33,7 @@ type Device struct {
 type Frame struct {
 	Number    int
 	Complete  bool
+	Damaged   bool
 	Data      []byte `json:"-"`
 	LastChunk int
 	Next      *Frame
@@ -90,10 +91,12 @@ func main() {
 						time.Sleep(10 * time.Millisecond)
 					}
 
-					content := append(frame.Data, []byte("\r\n")...)
+					if !frame.Damaged {
+						content := append(frame.Data, []byte("\r\n")...)
 
-					_, err := w.Write(append([]byte("--myboundary\r\nContent-Type: image/jpeg\r\n\r\n"), content...))
-					if err != nil {
+						_, err := w.Write(append([]byte("--myboundary\r\nContent-Type: image/jpeg\r\n\r\n"), content...))
+						if err != nil {
+						}
 					}
 
 					frame = frame.Next
@@ -211,6 +214,7 @@ func msgHandler(src *net.UDPAddr, n int, b []byte) {
 
 	if chunk_n != curFrame.LastChunk+1 {
 		log.Println(frame_n, "was expecting chunk", curFrame.LastChunk+1, " got", chunk_n)
+		curFrame.Damaged = true
 		device.ChunksLost += chunk_n - curFrame.LastChunk + 1
 	}
 
