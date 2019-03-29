@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -69,12 +70,20 @@ func main() {
 
 	{
 		dev.GET("/frame.mjpg", func(c *gin.Context) {
+			var ifd time.Duration
+
 			IP := c.MustGet("IP").(string)
 			frame := devices[IP].Frame
 			if frame == nil {
 				c.String(404, "No frames received")
 				c.Abort()
 				return
+			}
+
+			fps, err := strconv.Atoi(c.DefaultQuery("fps", "0"))
+			if fps > 0 && err == nil {
+				log.Printf("Client requested %d FPS", fps)
+				ifd = time.Duration(1000/fps) * time.Millisecond
 			}
 
 			c.Header("Content-Type", "multipart/x-mixed-replace; boundary=--myboundary")
@@ -99,7 +108,12 @@ func main() {
 						}
 					}
 
-					frame = frame.Next
+					if ifd > 0 {
+						time.Sleep(ifd)
+						frame = devices[IP].Frame
+					} else {
+						frame = frame.Next
+					}
 
 				}
 
