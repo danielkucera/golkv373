@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 )
@@ -41,6 +42,18 @@ type Frame struct {
 }
 
 func main() {
+	logName := "golkv373-" + time.Now().Format(time.RFC3339) + "-log.txt"
+	logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		panic(err)
+	}
+
+	mw := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(mw)
+	gin.DefaultWriter = mw
+
+	log.Println("Program started as: ", os.Args)
+
 	devices = make(map[string]*Device)
 	go activateStream()
 	go serveMulticastUDP(srvAddr, msgHandler)
