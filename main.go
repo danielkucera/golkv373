@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -42,7 +43,10 @@ type Frame struct {
 }
 
 func main() {
-	logName := "golkv373-" + time.Now().Format(time.RFC3339) + "-log.txt"
+	t := time.Now()
+	logName := fmt.Sprintf("golkv373-%d_%02d_%02d-%02d_%02d_%02d.txt",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
 	logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
