@@ -58,18 +58,21 @@ func (f *Frame) waitComplete(ms int) error {
 }
 
 func main() {
-	t := time.Now()
-	logName := fmt.Sprintf("golkv373-%d_%02d_%02d-%02d_%02d_%02d.txt",
-		t.Year(), t.Month(), t.Day(),
-		t.Hour(), t.Minute(), t.Second())
-	logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	if err != nil {
-		panic(err)
-	}
+	dolog, _ := strconv.ParseBool(os.Getenv("GOLKV_LOG"))
+	if dolog {
+		t := time.Now()
+		logName := fmt.Sprintf("golkv373-%d_%02d_%02d-%02d_%02d_%02d.txt",
+			t.Year(), t.Month(), t.Day(),
+			t.Hour(), t.Minute(), t.Second())
+		logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+		if err != nil {
+			panic(err)
+		}
 
-	mw := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(mw)
-	gin.DefaultWriter = mw
+		mw := io.MultiWriter(os.Stdout, logFile)
+		log.SetOutput(mw)
+		gin.DefaultWriter = mw
+	}
 
 	log.Println("Program started as: ", os.Args)
 
