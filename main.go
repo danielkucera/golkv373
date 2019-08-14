@@ -59,6 +59,11 @@ func (f *Frame) waitComplete(ms int) error {
 
 func main() {
 	dolog, _ := strconv.ParseBool(os.Getenv("GOLKV_LOG"))
+	listen_string, listen_ok := os.LookupEnv("GOLKV_LISTEN")
+	if !listen_ok {
+		listen_string = ":8080"
+	}
+
 	if dolog {
 		t := time.Now()
 		logName := fmt.Sprintf("golkv373-%d_%02d_%02d-%02d_%02d_%02d.txt",
@@ -194,7 +199,7 @@ func main() {
 		c.String(200, html)
 	})
 
-	router.Run(":8080")
+	router.Run(listen_string)
 }
 
 func statistics() {
