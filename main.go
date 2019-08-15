@@ -10,7 +10,9 @@ import (
 	"image/jpeg"
 	"io"
 	"log"
+	"mime/multipart"
 	"net"
+	"net/textproto"
 	"os"
 	"strconv"
 	"time"
@@ -126,38 +128,41 @@ func main() {
 				ifd = time.Duration(1000/fps) * time.Millisecond
 			}
 
-			c.Header("Content-Type", "multipart/x-mixed-replace; boundary=--myboundary")
+			_, rw, err := c.Writer.Hijack()
+			bodyWriter := multipart.NewWriter(rw)
 
-			stopStream := true
-			c.Stream(func(w io.Writer) bool {
-				defer func() {
-					stopStream = false
-				}()
+			rw.Write([]byte("HTTP/1.1 200 OK\r\n"))
+			rw.Write([]byte("Content-Type: multipart/x-mixed-replace; boundary=--" + bodyWriter.Boundary() + "\r\n\r\n"))
 
-				for true {
+			for true {
 
-					frame.waitComplete(0)
+				frame.waitComplete(0)
 
-					if !frame.Damaged {
-						content := append(frame.Data, []byte("\r\n")...)
+				if !frame.Damaged {
+					mh := make(textproto.MIMEHeader)
+					mh.Set("Content-Type", "image/jpeg")
+					mh.Set("Content-Length", fmt.Sprintf("%d", len(frame.Data)))
 
-						_, err := w.Write(append([]byte("--myboundary\r\nContent-Type: image/jpeg\r\n\r\n"), content...))
-						if err != nil {
-						}
+					pw, err := bodyWriter.CreatePart(mh)
+					if err != nil {
+						return
 					}
-
-					if ifd > 0 {
-						time.Sleep(ifd)
-						frame = devices[IP].Frame
-					} else {
-						frame = frame.Next
+					_, err = pw.Write(frame.Data)
+					if err != nil {
+						return
 					}
-
 				}
 
-				return stopStream
-			})
+				if ifd > 0 {
+					time.Sleep(ifd)
+					frame = devices[IP].Frame
+				} else {
+					frame = frame.Next
+				}
 
+			}
+
+			return
 		})
 
 		dev.GET("/frame.jpeg", func(c *gin.Context) {
