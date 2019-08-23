@@ -132,7 +132,7 @@ func main() {
 			bodyWriter := multipart.NewWriter(rw)
 
 			rw.Write([]byte("HTTP/1.1 200 OK\r\n"))
-			rw.Write([]byte("Content-Type: multipart/x-mixed-replace; boundary=--" + bodyWriter.Boundary() + "\r\n\r\n"))
+			rw.Write([]byte("Content-Type: multipart/x-mixed-replace; boundary=" + bodyWriter.Boundary() + "\r\n\r\n"))
 
 			for true {
 
