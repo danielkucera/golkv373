@@ -68,7 +68,7 @@ func main() {
 
 	if dolog {
 		t := time.Now()
-		logName := fmt.Sprintf("golkv373-%d_%02d_%02d-%02d_%02d_%02d.txt",
+		logName := fmt.Sprintf("log-%d_%02d_%02d-%02d_%02d_%02d.txt",
 			t.Year(), t.Month(), t.Day(),
 			t.Hour(), t.Minute(), t.Second())
 		logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
@@ -209,7 +209,7 @@ func main() {
 
 func statistics() {
 	for true {
-		active := ""
+		active := 0
 		for IP := range devices {
 			device := devices[IP]
 			device.BPS = float32(device.RxBytes - device.RxBytesLast)
@@ -217,15 +217,18 @@ func statistics() {
 			device.RxBytesLast = device.RxBytes
 			device.RxFramesLast = device.RxFrames
 			if device.BPS > 0 {
-				active += IP + " "
+				log.Printf("%s: MBPS=%d FPS=%d lost=%d", IP, device.BPS/(1024*1024), device.FPS, device.ChunksLost)
+				active += 1
 			}
 			go func(frame *Frame) {
 				frame.waitComplete(1000)
 				device.FrameConfig, _ = jpeg.DecodeConfig(bytes.NewReader(frame.Data))
 			}(device.Frame)
 		}
+		if active == 0 {
+			log.Printf("No active transmitters")
+		}
 		time.Sleep(time.Second)
-		log.Printf("Active transmitters: %s", active)
 	}
 }
 
