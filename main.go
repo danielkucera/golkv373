@@ -217,7 +217,7 @@ func statistics() {
 			device.RxBytesLast = device.RxBytes
 			device.RxFramesLast = device.RxFrames
 			if device.BPS > 0 {
-				log.Printf("%s: MBPS=%d FPS=%d lost=%d", IP, device.BPS/(1024*1024), device.FPS, device.ChunksLost)
+				log.Printf("%s: MB/s=%.2f FPS=%.2f lost=%d", IP, device.BPS/(1024*1024), device.FPS, device.ChunksLost)
 				active += 1
 			}
 			go func(frame *Frame) {
