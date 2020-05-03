@@ -7,6 +7,7 @@ env:
   global:
     - LIN64BIN=golkv373-$TRAVIS_TAG-linux64
     - WIN32BIN=golkv373-$TRAVIS_TAG-win32.exe
+    - WIN64BIN=golkv373-$TRAVIS_TAG-win64.exe
 
 jobs:
   include:
@@ -15,6 +16,7 @@ jobs:
         - echo "Building and Deploying to GitHub releases ..."
         - go build -o $LIN64BIN
         - GOOS=windows GOARCH=386 go build -o $WIN32BIN
+        - GOOS=windows GOARCH=amd64 go build -o $WIN64BIN
         - find .
       deploy:
         provider: releases
@@ -23,6 +25,7 @@ jobs:
         file:
           - $LIN64BIN
           - $WIN32BIN
+          - $WIN64BIN
         on:
           tags: true
 
