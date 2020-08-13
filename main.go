@@ -241,7 +241,7 @@ func checkMatchingInterface(iip net.IP) bool {
 	for i := range addrs {
 		part := strings.Split(addrs[i].String(), "/")
 		ip := net.ParseIP(part[0])
-		maskones,_ := strconv.Atoi(part[1])
+		maskones, _ := strconv.Atoi(part[1])
 		mask := net.CIDRMask(maskones, 32)
 		ipnet := &net.IPNet{IP: ip, Mask: mask}
 		if ipnet.Contains(iip) {
@@ -268,7 +268,7 @@ func activateStream() {
 		if err != nil {
 			log.Printf(err.Error())
 		}
-		if ! checkMatchingInterface(remote.IP) {
+		if !checkMatchingInterface(remote.IP) {
 			log.Printf("Warning: No interface with subnet matching remote IP %s", remote.IP)
 		}
 		conn.WriteToUDP([]byte(ctrlv2), remote)
