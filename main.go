@@ -272,7 +272,13 @@ func activateStream() {
 			log.Printf("Warning: No interface with subnet matching remote IP %s", remote.IP)
 		}
 		conn.WriteToUDP([]byte(ctrlv2), remote)
-		log.Printf("keepalive sent to %s", remote)
+
+		_, ok := devices[remote.IP.String()]
+		if !ok || devices[remote.IP.String()].BPS < 1 {
+			log.Printf("Warning: keepalive sent to %s, but no data received, consult FAQ", remote)
+		} else {
+			log.Printf("keepalive sent to %s", remote)
+		}
 	}
 
 }
